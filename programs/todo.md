@@ -8,4 +8,8 @@
   - Create the ability to mine a tunnel
 - [ ] Connect to website using websocet
   - Create a uniqe name and id
-  - 
+
+## Energy monitoring (energy)
+
+- [ ] Connect to website using websocet
+  - Create a uniqe name and id

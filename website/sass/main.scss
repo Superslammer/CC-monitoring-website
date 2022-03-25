@@ -1,7 +1,25 @@
+body{
+    background-color: #023047;
+}
+
+p{
+    color: white;
+}
+
 .container{
-    padding-top: 10vh;
+    padding-top: 2vh;
+    width: 85vw;
 }
 
 .center{
     text-align: center;
+}
+
+.top{
+    display: flex;
+    flex-direction: row;
+}
+
+.header{
+    width: 15vw;
 }

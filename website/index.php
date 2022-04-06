@@ -21,7 +21,26 @@
         <div class="container">
             <div class="row">
                 <div class="col">
-                    <p class="center">Here is some text</p>
+                    <div class="row contentBox energy">
+                        <div class="col-4">
+                            <p>Energy</p>
+                            <p>Total energy: 1111 RF</p>
+                            <p>Gain/Loss: +10 RF</p>
+                            <br>
+                            <select>
+                                <option value="RF" selected>RF</option>
+                                <option value="EU">EU</option>
+                            </select>
+                        </div>
+                        <div class="col-8">
+                            <p>Net gain over time</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col contentBox">
+                    <p>Bottom Text</p>
                 </div>
             </div>
         </div>

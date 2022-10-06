@@ -1,0 +1,8 @@
+@use 'colors.scss' as colors;
+
+body{
+    background-color: colors.$background-color;
+    margin: 0;
+    padding: 0;
+    color: white;
+}

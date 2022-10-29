@@ -1,88 +1,113 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted } from 'vue'
 import * as d3 from 'd3'
 
 const data = [
-	{ date: "24-Apr-07", amount: 93.24 },
-	{ date: "25-Apr-07", amount: 95.35 },
-	{ date: "26-Apr-07", amount: 98.84 },
-	{ date: "27-Apr-07", amount: 99.92 },
-	{ date: "30-Apr-07", amount: 99.8 },
-	{ date: "1-May-07", amount: 99.47 },
-	{ date: "2-May-07", amount: 100.39 },
-	{ date: "3-May-07", amount: 100.4 },
-	{ date: "4-May-07", amount: 100.81 },
-	{ date: "7-May-07", amount: 103.92 },
-	{ date: "8-May-07", amount: 105.06 },
-	{ date: "9-May-07", amount: 106.88 },
-	{ date: "10-May-07", amount: 107.34 },
+  { date: 1666750500, amount: 10 },
+  { date: 1666750620, amount: 11 },
+  { date: 1666750800, amount: 10 },
+  { date: 1666751100, amount: 20 },
+  { date: 1666751400, amount: 21 },
+  { date: 1666751700, amount: 27 },
+  { date: 1666751800, amount: 29.5 },
+  { date: 1666752000, amount: 30 },
+  { date: 1666752300, amount: 0 },
+  { date: 1666752600, amount: 30 },
+  { date: 1666752900, amount: 41 },
 ]
+const xAxisTicks = ref([])
 
-const parseTime = d3.timeParse("%d-%b-%y")
+const width = ref(500)
+const height = ref(500)
+
 
 onMounted(() => {
-  const width = 800
-  const height = 500
-  const svg = d3.select("svg").attr("width", width).attr("height", height)
-  const g = svg
+  var svgEl = document.getElementById("energyGraph")
+  var svgRect = svgEl.getBoundingClientRect()
 
-  const x = d3
-    .scaleTime()
-    .domain(
-      d3.extent(data, function (d) {
-        return parseTime(d.date);
-      })
-    )
-    .rangeRound([0, width]);
+  width.value = svgRect.width
+  height.value = svgRect.height
 
-  const y = d3
-    .scaleLinear()
-    .domain(
-      d3.extent(data, function (d) {
-        return d.amount;
-      })
-    )
-    .rangeRound([height, 0]);
-
-  const line = d3.line()
-    .x(function (d) {
-      return x(parseTime(d.date));
-    })
-    .y(function (d) {
-      return y(d.amount);
-    })
-
-  g.append("g")
-    .attr("transform", "translate(0," + height + ")")
-    .call(d3.axisBottom(x));
-
-  g.append("g")
-    .call(d3.axisLeft(y))
-    .append("text")
-    .attr("fill", "#000")
-    .attr("transform", "rotate(-90)")
-    .attr("y", 6)
-    .attr("dy", "0.71em")
-    .attr("text-anchor", "end")
-    .text("Price ($)")
-
-  g.append("path")
-    .datum(data)
-    .attr("fill", "none")
-    .attr("stroke", "steelblue")
-    .attr("stroke-width", 1.5)
-    .attr("d", line)
-  
+  generateGraph()
 })
+
+function generateGraph() {
+  let margin = ({ top: 15, right: 15, bottom: 10, left: 15 })
+  let svg = d3.select("svg")
+
+  // Creating line
+  let scaleX = d3.scaleTime()
+    .domain([new Date(data[0].date * 1000), new Date(data[data.length - 1].date * 1000)])
+    .range([margin.left, width.value - margin.right])
+
+  let scaleY = d3.scaleLinear()
+    .domain([d3.min(data, d => d.amount), d3.max(data, d => d.amount)])
+    .range([height.value - margin.bottom, margin.top])
+
+  let line = d3.line()
+    .x(d => scaleX(d.date * 1000))
+    .y(d => scaleY(d.amount))
+
+  // Creating axises
+  let xAxis = svg => svg
+    .attr("transform", `translate(0,${height.value - margin.bottom})`)
+    .call(d3.axisBottom(scaleX)
+      .ticks(d3.timeMinute.every(5))
+      .tickFormat(getXaxisTicks))
+    .call(g => g.select(".domain")
+      .remove())
+
+  let yAxis = svg => svg
+    .attr("transform", `translate(${margin.left},0)`)
+    .call(d3.axisRight(scaleY)
+      .tickSize(width.value - margin.left - margin.right)
+      .tickFormat(formatYaxisTicks))
+    .call(g => g.select(".domain")
+      .remove())
+    .call(g => g.selectAll(".tick line")
+      .attr("stroke-opacity", 0.5))
+    .call(g => g.selectAll(".tick text")
+      .attr("x", 4)
+      .attr("dy", -4))
+
+  function getXaxisTicks(d) {
+    xAxisTicks.value.push(d)
+    return d
+  }
+
+  function formatYaxisTicks(d) {
+    return d + " MRF"
+  }
+
+  // Applying axises and line
+
+  svg.append("g")
+    .attr("id", "remove")
+    .call(xAxis)
+
+  svg.select("#remove").remove()
+
+  svg.append("path").attr("d", line(data))
+    .classed("graphStroke", true)
+
+  svg.append("g")
+    .call(yAxis)
+}
 </script>
 
 <template>
-	<div>
-		<h2>Test line chart</h2>
-		<svg></svg>
-	</div>
+  <div>
+    <svg id="energyGraph" class="line"></svg>
+  </div>
 </template>
 
 <style lang="scss" scoped>
+.line {
+  fill: none;
+}
 
+svg {
+  width: 100%;
+  height: 21rem;
+}
 </style>

@@ -1,8 +1,13 @@
-@use 'colors.scss' as colors;
+@use "colors.scss" as colors;
 
-body{
+body {
     background-color: colors.$background-color;
     margin: 0;
     padding: 0;
     color: white;
+}
+
+.graphStroke {
+    stroke: #13acde;
+    stroke-width: 4px;
 }

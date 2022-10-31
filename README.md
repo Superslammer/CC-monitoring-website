@@ -11,5 +11,6 @@ Current version is just a skeleton without any features
 - Reactor monitoring
   - Extreme reactors
   - Mekanism reactors
+- Monitoring of running turtles
 
 Open an issue if you want to request features

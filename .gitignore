@@ -4,3 +4,4 @@ venv/
 website/Temp webserver.py
 Monitoring.code-workspace
 .vscode/*
+.env

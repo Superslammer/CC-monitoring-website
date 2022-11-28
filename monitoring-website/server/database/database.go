@@ -146,7 +146,6 @@ func RegisterComputer(id int, typeID int, name string) {
 }
 
 type EnergyComputerResponse struct {
-	Error        bool                            `json:"error"`
 	ComputerData []EnergyComputerResponseElement `json:"computers"`
 }
 
@@ -158,8 +157,7 @@ type EnergyComputerResponseElement struct {
 	CurrentRF   int64  `json:"currentRF"`
 }
 
-// TODO: Check if any computers have been regisered and return error if so
-func GetEnergyComputers(id, numComputers int) (EnergyComputerResponse, error) {
+func GetEnergyComputers(id, numComputers int) EnergyComputerResponse {
 	var computers EnergyComputerResponse
 
 	if id == -1 {
@@ -221,8 +219,23 @@ func GetEnergyComputers(id, numComputers int) (EnergyComputerResponse, error) {
 		}
 		computers.ComputerData = append(computers.ComputerData, computerElement)
 	}
-	computers.Error = false
-	return computers, nil
+	return computers
+}
+
+func UpdateEnergyComputer(id int, newMaxRF int64) error {
+	energyComputerRow := db.QueryRow("SELECT `id` FROM `energycomputers` WHERE `id`=?", id)
+	handleError(energyComputerRow.Err())
+
+	// Check if energy computer exsists
+	var compID int
+	err := energyComputerRow.Scan(&compID)
+	if err != nil {
+		return errors.New("Energy computer doesn't exsist")
+	}
+
+	_, err = db.Exec("UPDATE `energycomputers` SET `maxRF`=? WHERE `id`=?", newMaxRF, id)
+	handleError(err)
+	return nil
 }
 
 func checkDBIsSet() {

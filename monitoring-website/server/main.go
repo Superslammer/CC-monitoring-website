@@ -33,7 +33,8 @@ func main() {
 	// Get computers registered as energy
 	api.HandleFunc("/energyComputer", sendEnergyComputers).Methods("GET")
 
-	// Update energy computer info
+	// Patch energy computer info
+	api.HandleFunc("/energyComputer", updateEnergyComputer).Methods("PUT")
 
 	// Energy data extration
 	api.HandleFunc("/energyData", sendEnergyData).Methods("GET")
@@ -128,7 +129,7 @@ type EnergyComputerRegistrationRequest struct {
 	Name       string `json:"name"`
 }
 
-type ComputerRegistrationResponse struct {
+type ComputerResponse struct {
 	Error bool   `json:"error"`
 	Msg   string `json:"msg"`
 }
@@ -142,20 +143,55 @@ func registerEnergyComputer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	var response ComputerRegistrationResponse
+	var response ComputerResponse
 	err = db.CreateEnergyComputerEntry(decoded.ComputerID, decoded.MaxEnergy, decoded.Name)
 	if err != nil {
-		response = ComputerRegistrationResponse{
+		response = ComputerResponse{
 			Error: true,
 			Msg:   err.Error(),
 		}
+		w.WriteHeader(http.StatusConflict)
 	} else {
-		response = ComputerRegistrationResponse{
+		response = ComputerResponse{
 			Error: false,
 			Msg:   "Computer registered as energy computer",
 		}
+		w.WriteHeader(http.StatusCreated)
 	}
 	json.NewEncoder(w).Encode(&response)
+}
+
+type EnergyComputerUpdate struct {
+	ID       int   `json:"id"`
+	NewMaxRF int64 `json:"newMaxRF"`
+}
+
+func updateEnergyComputer(w http.ResponseWriter, r *http.Request) {
+	var decoded EnergyComputerUpdate
+	jsonDecoder := json.NewDecoder(r.Body)
+	jsonDecoder.DisallowUnknownFields()
+	err := jsonDecoder.Decode(&decoded)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	err = db.UpdateEnergyComputer(decoded.ID, decoded.NewMaxRF)
+	var response ComputerResponse
+	if err != nil {
+		response = ComputerResponse{
+			Error: true,
+			Msg:   err.Error(),
+		}
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	response = ComputerResponse{
+		Error: false,
+		Msg:   "Energy computer updated",
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func sendEnergyComputers(w http.ResponseWriter, r *http.Request) {
@@ -168,31 +204,40 @@ func sendEnergyComputers(w http.ResponseWriter, r *http.Request) {
 	compId, isNumCompId := strconv.Atoi(params["computerID"])
 	newNumComputers, isNumNumComputers := strconv.Atoi(params["numComputers"])
 	if params["computerID"] != "" && isNumCompId == nil {
-		// Get specific computer data
-		computers, err := db.GetEnergyComputers(compId, 1)
-		handleError(err)
+		// Get one specific computers data
+		computers := db.GetEnergyComputers(compId, 1)
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(computers)
 		return
 	} else if params["computerID"] != "" && isNumCompId != nil {
+		// If "computerID" is not a number
 		parameterError("computerID", "int/number", w)
 		return
 	} else if params["numComputers"] != "" && isNumNumComputers == nil {
-		computers, err := db.GetEnergyComputers(-1, newNumComputers)
-		handleError(err)
+		// Get specific number of computers
+		computers := db.GetEnergyComputers(-1, newNumComputers)
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(computers)
 		return
 	} else if params["numComputers"] != "" && isNumNumComputers != nil {
+		// If "numComputer" is not a number
 		parameterError("numComputers", "int/number", w)
 		return
 	}
 
-	computers, err := db.GetEnergyComputers(-1, numComputers)
-	handleError(err)
+	// Get default amonut of computers
+	computers := db.GetEnergyComputers(-1, numComputers)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(computers)
 }
 
 func parameterError(parameter string, paraType string, w http.ResponseWriter) {
-	fmt.Fprintf(w, `{"error": true, "msg": "Invalid value in parameter: %s. Must be of type: %s"}`, parameter, paraType)
+	response := ComputerResponse{
+		Error: true,
+		Msg:   "Invalid value in parameter: " + parameter + ". Must be of type: " + paraType,
+	}
+	w.WriteHeader(http.StatusBadRequest)
+	json.NewEncoder(w).Encode(response)
 }
 
 func isOnline(w http.ResponseWriter, r *http.Request) {

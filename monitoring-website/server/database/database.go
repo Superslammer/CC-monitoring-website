@@ -181,7 +181,9 @@ func GetEnergyComputers(id, numComputers int) EnergyComputerResponse {
 			var currentRF int64
 			energyDataRow := db.QueryRow("SELECT `RF` FROM `energydata` WHERE `computerID`=? ORDER BY `dateTime` DESC LIMIT 1", computerID)
 			err = energyDataRow.Scan(&currentRF)
-			handleError(err)
+			if err != nil {
+				currentRF = -1
+			}
 
 			computerElement = EnergyComputerResponseElement{
 				ID:          computerID,

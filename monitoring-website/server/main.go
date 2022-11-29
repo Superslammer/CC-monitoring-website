@@ -33,7 +33,7 @@ func main() {
 	// Get computers registered as energy
 	api.HandleFunc("/energyComputer", sendEnergyComputers).Methods("GET")
 
-	// Patch energy computer info
+	// Update energy computer info
 	api.HandleFunc("/energyComputer", updateEnergyComputer).Methods("PUT")
 
 	// Energy data extration
@@ -125,7 +125,7 @@ func recieveEnergyData(w http.ResponseWriter, r *http.Request) {
 
 type EnergyComputerRegistrationRequest struct {
 	ComputerID int    `json:"computerID"`
-	MaxEnergy  int64  `json:"maxEnergy"`
+	MaxEnergy  int64  `json:"maxRF"`
 	Name       string `json:"name"`
 }
 
@@ -191,6 +191,7 @@ func updateEnergyComputer(w http.ResponseWriter, r *http.Request) {
 		Error: false,
 		Msg:   "Energy computer updated",
 	}
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 

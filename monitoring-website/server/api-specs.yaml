@@ -1,0 +1,335 @@
+openapi: 3.0.3
+
+info:
+  title: CC-Monitoring API
+  description: The api for the CC-Monitoring website
+  version: 0.1.0
+
+tags:
+  - name: energyData
+    description: Ways to extract, insert and manipulate energy data
+  - name: energyComputer
+    description: Ways to extract, insert and manipulate energy computers
+
+servers:
+  - url: localhost
+
+paths: 
+  /energy-data:
+    get:
+      parameters:
+      - name: dateTime
+        in: query
+        description: The date time to get entries from, the time format is in MySQL datetime
+        required: false
+        schema:
+          type: string
+      - name: numEntries
+        in: query
+        description: The number of entries to return, defaluts to 20
+        required: false
+        schema:
+          type: number
+          default: 20
+      - name: computerID
+        in: query
+        description: The computer to get entries from
+        required: false
+        schema:
+          type: number
+
+      operationId: getEnergyData
+      tags: [energyData]
+      summary: Returns an array of energy data objects
+      description: ""
+      responses:
+        "200":
+          description: All went well
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/energyDataGet"
+        "400":
+          description: Malformed request
+        "404":
+          description: No entries in database
+
+    post:
+      operationId: postEnergyData
+      tags: [energyData]
+      summary: Insert array of energy data objects
+      description: ""
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/energyDataPost"
+      responses:
+        "200":
+          description: All went well
+        "400":
+          description: Mallformed request
+
+  /energy-data/{id}:
+    parameters:
+    - name: id
+      in: path
+      description: ID of the energy data that needs to be returned/updated/deleted
+      required: true
+      schema:
+        type: number
+
+    get:
+      operationId: getSingleEnergyData
+      tags: [energyData]
+      summary: Get a single energy data entry via it's ID
+      responses:
+        "200":
+          description: All went well
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/energyDataGet"
+        "400":
+          description: Malformed request
+        "404":
+          description: Invalid energy data ID
+
+    patch:
+      operationId: updateEnergyData
+      tags: [energyData]
+      summary: Change the information of a energy data entry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/energyDataPatch"
+      responses:
+        "200":
+          description: All went well
+        "400":
+          description: Mallformed request
+        "404":
+          description: Invalid energy data ID
+
+    delete:
+      operationId: deleteEnergyData
+      tags: [energyData]
+      summary: Delete an energy data entry
+      responses:
+        "200":
+          description: Energy data entry deleted
+        "400":
+          description: Malformed request
+        "404":
+          description: Invalid energy data ID
+
+  /energy-computer:
+    get:
+      parameters:
+      - name: numComputers
+        in: query
+        description: The number of entries to return, defaluts to 20
+        required: false
+        schema:
+          type: number
+          default: 20
+
+      operationId: getEnergyComputers
+      tags: [energyComputer]
+      summary: Returns an array of computers
+      description: ""
+      responses:
+        "200":
+          description: All went well
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/energyComputerGet"
+
+    post:
+      operationId: postEnergyComputer
+      tags: [energyComputer]
+      summary: Assign/Create a energy computer
+      description: ""
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/energyComputerPost"
+      responses:
+        "200":
+          description: Computer created/assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ID:
+                    type: number
+                    description: The id assigned to the computer
+        "400":
+          description: Malformed request
+
+  /energy-computer/{id}:
+    parameters:
+    - name: id
+      in: path
+      description: ID of the energy computer that needs to be returned/updated/deleted
+      required: true
+      schema:
+        type: number
+
+    get:
+      operationId: getSingleEnergyComputer
+      tags: [energyComputer]
+      summary: Get a single energy computer
+      description: ""
+      responses:
+        "200":
+          description: All went well
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/energyComputerGet"
+        "400":
+          description: Malformed request
+        "404":
+          description: Invalid energy computer ID
+
+    patch:
+      operationId: updateEnergyComputer
+      tags: [energyComputer]
+      summary: Update information on energy computer
+      description: ""
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/energyComputerPatch"
+      responses:
+        "200":
+          description: Computer info updated
+        "400":
+          description: Malformed request
+        "404":
+          description: Invalid energy computer ID
+
+    delete:
+      operationId: deleteEnergyComputer
+      tags: [energyComputer]
+      summary: Delete energy computer
+      description: ""
+      responses:
+        "200":
+          description: Computer deleted
+        "400":
+          description: Malformed request
+        "404":
+          description: Invalid energy computer ID
+
+components:
+  schemas:
+    energyDataGet:
+      type: array
+      maxItems: 100
+      minItems: 1
+      items:
+        type: object
+        properties:
+          id:
+            type: number
+            description: The ID of the energy data entry
+          dateTime:
+            type: string
+            description: The MySQL datetime that the energy data entry was inserted
+          RF:
+            type: number
+            description: The amount of RF in the computer at the time
+          computerID:
+            type: number
+            description: The ID of the computer that inserted the entry
+
+    energyDataPost:
+      type: array
+      maxItems: 100
+      minItems: 1
+      items:
+        type: object
+        properties:
+          dateTime:
+            type: string
+            description: The MySQL datetime that the energy data entry was inserted
+          RF:
+            type: number
+            description: The amount of RF in the computer at the time
+          computerID:
+            type: number
+            description: The ID of the computer that inserted the entry
+
+    energyDataPatch:
+      type: object
+      properties:
+        dateTime:
+          type: string
+          description: The MySQL datetime that the energy data entry was inserted
+        RF:
+          type: number
+          description: The amount of RF in the computer at the time
+        computerID:
+          type: number
+          description: The ID of the computer that inserted the entry
+
+    energyComputerGet:
+      type: array
+      maxItems: 100
+      minItems: 1
+      items:
+        type: object
+        properties:
+          id:
+            type: number
+            description: The ID assigned to the computer
+          name:
+            type: string
+            description: The name given to the computer
+          maxRF:
+            type: number
+            description: The maximum amount of RF the energy device connected to the computer can hold
+          lastUpdated:
+            type: string
+            description: The last date time the computer reported data, given in MySQL datetime format
+          currentRF:
+            type: number
+            description: The amount of RF the energy device connected to the computer currently hold
+            
+    energyComputerPost:
+      type: array
+      maxItems: 100
+      minItems: 1
+      items:
+        type: object
+        properties:
+          id:
+            type: number
+            description: The ID of the computer to be assigned, if it's -1 the server decides the id
+            default: -1
+          name:
+            type: string
+            description: The name given to the computer
+          maxRF:
+            type: number
+            description: The maximum amount of RF the energy device connected to the computer can hold
+          currentRF:
+            type: number
+            description: The amount of RF the energy device connected to the computer currently hold
+    
+    energyComputerPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name given to the computer
+        maxRF:
+          type: number
+          description: The maximum amount of RF the energy device connected to the computer can hold

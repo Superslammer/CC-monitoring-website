@@ -164,7 +164,6 @@ function updateChart() {
   }
   getData()
   let [chartDataX, chartDataY] = getChartData(energyData)
-  chartDataY[2] = Math.floor(Math.random() * 30000) + 120000
 
   chart.data.labels = []
   chart.data.datasets[0].data = []

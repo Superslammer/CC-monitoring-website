@@ -15,7 +15,7 @@ servers:
   - url: localhost
 
 paths: 
-  /energy-data:
+  /energy-data/:
     get:
       parameters:
       - name: dateTime
@@ -70,7 +70,7 @@ paths:
         "400":
           description: Mallformed request
 
-  /energy-data/{id}:
+  /energy-data/{id}/:
     parameters:
     - name: id
       in: path
@@ -124,7 +124,7 @@ paths:
         "404":
           description: Invalid energy data ID
 
-  /energy-computer:
+  /energy-computer/:
     get:
       parameters:
       - name: numComputers
@@ -171,7 +171,7 @@ paths:
         "400":
           description: Malformed request
 
-  /energy-computer/{id}:
+  /energy-computer/{id}/:
     parameters:
     - name: id
       in: path

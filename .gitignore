@@ -1,7 +1,4 @@
 util/
-website/Sketch.*
-venv/
-website/Temp webserver.py
-Monitoring.code-workspace
+*.code-workspace
 .vscode/*
 .env

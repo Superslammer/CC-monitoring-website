@@ -14,6 +14,7 @@ import (
 func sendEnergyComputers(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Database connection
 	db := database.ConnectDB()
+	defer db.Close()
 
 	// Get numComputers as number
 	var numComputers int
@@ -63,6 +64,7 @@ type EnergyComputer struct {
 func createEnergyComputer(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Datbase connection
 	db := database.ConnectDB()
+	defer db.Close()
 
 	// Decoding recived data
 	var decoded EnergyComputers
@@ -94,6 +96,7 @@ type EnergyComputerUpdate struct {
 func updateEnergyComputer(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Datbase connection
 	db := database.ConnectDB()
+	defer db.Close()
 
 	// Decode the recieved data
 	var decoded EnergyComputerUpdate
@@ -129,6 +132,7 @@ func updateEnergyComputer(w http.ResponseWriter, r *http.Request, ps httprouter.
 func removeEnergyComputer(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Database connection
 	db := database.ConnectDB()
+	defer db.Close()
 
 	parID := ps.ByName("id")
 	id, err := strconv.Atoi(parID)

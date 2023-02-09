@@ -1,113 +1,216 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import * as d3 from 'd3'
+import { Chart } from 'chart.js/auto';
+import { ref, onMounted, watch } from 'vue';
+import axios from 'axios'
 
-const data = [
-  { date: 1666750500, amount: 10 },
-  { date: 1666750620, amount: 11 },
-  { date: 1666750800, amount: 10 },
-  { date: 1666751100, amount: 20 },
-  { date: 1666751400, amount: 21 },
-  { date: 1666751700, amount: 27 },
-  { date: 1666751800, amount: 29.5 },
-  { date: 1666752000, amount: 30 },
-  { date: 1666752300, amount: 0 },
-  { date: 1666752600, amount: 30 },
-  { date: 1666752900, amount: 41 },
-]
-const xAxisTicks = ref([])
+const APIPATH = "http://api.localhost:3000"
+const chartIntervals = 60
+const renderChart = ref(0)
 
-const width = ref(500)
-const height = ref(500)
+let energyData
+let computers
+let chart
 
-
-onMounted(() => {
-  var svgEl = document.getElementById("energyGraph")
-  var svgRect = svgEl.getBoundingClientRect()
-
-  width.value = svgRect.width
-  height.value = svgRect.height
-
-  generateGraph()
+// Get energy computers
+axios.get(APIPATH + "/energy-computer/").then(response => {
+  computers = response.data
+  renderChart.value++
+}).catch(error => {
+  console.log(error)
 })
 
-function generateGraph() {
-  let margin = ({ top: 15, right: 15, bottom: 10, left: 15 })
-  let svg = d3.select("svg")
+// Get energy data
+axios.get(APIPATH + "/energy-data/").then(response => {
+  energyData = response.data
+  renderChart.value++
+}).catch(error => {
+  console.log(error)
+})
 
-  // Creating line
-  let scaleX = d3.scaleTime()
-    .domain([new Date(data[0].date * 1000), new Date(data[data.length - 1].date * 1000)])
-    .range([margin.left, width.value - margin.right])
+let unwatch = watch(renderChart, (newVal) => {
+  if (newVal == 2) {
+    setTimeout(createChart, 0)
+    unwatch()
+  }
+})
 
-  let scaleY = d3.scaleLinear()
-    .domain([d3.min(data, d => d.amount), d3.max(data, d => d.amount)])
-    .range([height.value - margin.bottom, margin.top])
+function getChartData(data) {
+  data.sort((a, b) => {
+    let da = new Date(a.dateTime)
+    let db = new Date(b.dateTime)
 
-  let line = d3.line()
-    .x(d => scaleX(d.date * 1000))
-    .y(d => scaleY(d.amount))
-
-  // Creating axises
-  let xAxis = svg => svg
-    .attr("transform", `translate(0,${height.value - margin.bottom})`)
-    .call(d3.axisBottom(scaleX)
-      .ticks(d3.timeMinute.every(5))
-      .tickFormat(getXaxisTicks))
-    .call(g => g.select(".domain")
-      .remove())
-
-  let yAxis = svg => svg
-    .attr("transform", `translate(${margin.left},0)`)
-    .call(d3.axisRight(scaleY)
-      .tickSize(width.value - margin.left - margin.right)
-      .tickFormat(formatYaxisTicks))
-    .call(g => g.select(".domain")
-      .remove())
-    .call(g => g.selectAll(".tick line")
-      .attr("stroke-opacity", 0.5))
-    .call(g => g.selectAll(".tick text")
-      .attr("x", 4)
-      .attr("dy", -4))
-
-  function getXaxisTicks(d) {
-    xAxisTicks.value.push(d)
-    return d
+    return da.getTime() - db.getTime()
+  })
+  for (let i = 0; i < data.length; i++) {
+    data[i].dateTime = new Date(data[i].dateTime)
   }
 
-  function formatYaxisTicks(d) {
-    return d + " MRF"
+  let chartDataX = []
+  let chartDataY = []
+  let dateTime = new Date(data[0].dateTime.getTime() + (chartIntervals * 1000))
+  while (true && chartDataX.length < 15) {
+    chartDataX.push(dateTime)
+    if (dateTime.getTime() > data[data.length - 1].dateTime.getTime() + (chartIntervals * 1000)) {
+      break
+    }
+    chartDataY.push(getRFFromData(data, dateTime))
+
+    dateTime = new Date(dateTime.getTime() + (60 * 1000))
   }
 
-  // Applying axises and line
+  for (let i = 0; i < chartDataX.length; i++) {
+    const elem = chartDataX[i];
+    let chartData = elem.getHours().toString() + ":" +
+      elem.getMinutes().toString() + ":" +
+      elem.getSeconds().toString()
+    chartDataX[i] = chartData
+  }
 
-  svg.append("g")
-    .attr("id", "remove")
-    .call(xAxis)
-
-  svg.select("#remove").remove()
-
-  svg.append("path").attr("d", line(data))
-    .classed("graphStroke", true)
-
-  svg.append("g")
-    .call(yAxis)
+  return [chartDataX, chartDataY]
 }
+
+function getRFFromData(data, dateTime) {
+  let avalibleData = data.filter((d) => {
+    return d.dateTime < dateTime
+  })
+  avalibleData.reverse()
+
+  let RF = 0
+  for (let i = 0; i < computers.length; i++) {
+    for (let j = 0; j < avalibleData.length; j++) {
+      if (avalibleData[i].computerID == computers[j].id) {
+        RF += avalibleData[i].RF
+        break
+      }
+    }
+  }
+
+  return RF
+}
+
+function createChart() {
+  let [chartDataX, chartDataY] = getChartData(energyData)
+  chart = new Chart(
+    document.getElementById("energyData"),
+    {
+      type: "line",
+      options: {
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            enabled: false
+          }
+        },
+        elements: {
+          point: {
+            radius: 0
+          },
+          line: {
+            borderColor: "#13acde"
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false,
+              tickColor: "#858585",
+            }
+          },
+          y: {
+            grid: {
+              color: "#858585",
+            }
+          },
+
+        }
+      },
+      data: {
+        labels: chartDataX,
+        datasets: [
+          {
+            label: "RF",
+            data: chartDataY
+          }
+        ]
+      }
+    }
+  )
+}
+
+function updateChart() {
+
+  async function getData() {
+    // Get energy computers
+    try {
+      let energyRes = await axios.get(APIPATH + "/energy-computer/")
+      computers = energyRes.data
+    } catch (error) {
+      console.log(error)
+      return
+    }
+
+    // Get energy data
+    try {
+      let energyRes = await axios.get(APIPATH + "/energy-data/")
+      energyData = energyRes.data
+    } catch (error) {
+      console.log(error)
+      return
+    }
+  }
+  getData()
+  let [chartDataX, chartDataY] = getChartData(energyData)
+  chartDataY[2] = Math.floor(Math.random() * 30000) + 120000
+
+  chart.data.labels = []
+  chart.data.datasets[0].data = []
+
+  chart.data.labels = chartDataX
+  chart.data.datasets[0].data = chartDataY
+
+  chart.update()
+}
+
+onMounted(() => {
+  setInterval(updateChart, 1000 * 60)
+})
+
 </script>
 
 <template>
-  <div>
-    <svg id="energyGraph" class="line"></svg>
+  <div class="dataContainer">
+    <canvas id="energyData" v-if="renderChart == 2">
+
+    </canvas>
+    <div class="spinner" title="Loading data" v-else>
+      <img src="../assets/spinner.svg" class="spinner" alt="Loading data" />
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.line {
-  fill: none;
+.dataContainer {
+  position: relative;
+  height: 20em;
 }
 
-svg {
+.spinner {
   width: 100%;
-  height: 21rem;
+  height: 100%;
+
+  img {
+    width: 50px;
+    height: 50px;
+
+    margin: auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+  }
 }
 </style>

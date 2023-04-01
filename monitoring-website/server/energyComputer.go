@@ -21,7 +21,10 @@ func sendEnergyComputers(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	if numEntriesPar := ps.ByName("numComputers"); numEntriesPar != "" {
 		var err error
 		numComputers, err = strconv.Atoi(numEntriesPar)
-		handleError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			emptyResponse(w)
+		}
 	} else {
 		numComputers = 20
 	}
@@ -34,7 +37,10 @@ func sendEnergyComputers(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	} else if parID != "" {
 		var id int
 		id, err = strconv.Atoi(parID)
-		handleError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			emptyResponse(w)
+		}
 		data, err = db.GetEnergyComputers(id, 1)
 	}
 
@@ -86,6 +92,8 @@ func createEnergyComputer(w http.ResponseWriter, r *http.Request, ps httprouter.
 			return
 		}
 	}
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w)
 }
 
 type EnergyComputerUpdate struct {
@@ -111,7 +119,10 @@ func updateEnergyComputer(w http.ResponseWriter, r *http.Request, ps httprouter.
 	parID := ps.ByName("id")
 	var id int
 	id, err = strconv.Atoi(parID)
-	handleError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		emptyResponse(w)
+	}
 
 	err = db.UpdateEnergyComputer(id, decoded.Name, decoded.MaxRF)
 	if err == sql.ErrNoRows {
@@ -136,7 +147,10 @@ func removeEnergyComputer(w http.ResponseWriter, r *http.Request, ps httprouter.
 
 	parID := ps.ByName("id")
 	id, err := strconv.Atoi(parID)
-	handleError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		emptyResponse(w)
+	}
 
 	err = db.RemoveEnergyComputer(id)
 	if err != nil {

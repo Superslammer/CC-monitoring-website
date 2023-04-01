@@ -46,6 +46,6 @@ func (db *Database) Close() {
 
 func handleError(err error) {
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 }

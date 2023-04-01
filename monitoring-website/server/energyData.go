@@ -30,7 +30,10 @@ func sendEnergyData(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	if numEntriesPar := ps.ByName("numEntries"); numEntriesPar != "" {
 		var err error
 		numEntries, err = strconv.Atoi(numEntriesPar)
-		handleError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			emptyResponse(w)
+		}
 	} else {
 		numEntries = 20
 	}
@@ -40,7 +43,10 @@ func sendEnergyData(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	if computerIDPar := ps.ByName("computerID"); computerIDPar != "" {
 		var err error
 		computerID, err = strconv.Atoi(computerIDPar)
-		handleError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			emptyResponse(w)
+		}
 	} else {
 		computerID = -1
 	}
@@ -50,7 +56,10 @@ func sendEnergyData(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	if strID := ps.ByName("id"); strID != "" {
 		var id int
 		id, err = strconv.Atoi(strID)
-		handleError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			emptyResponse(w)
+		}
 		data, err = db.GetEnergyData(id, computerID, numEntries, curTime)
 	} else {
 		data, err = db.GetEnergyData(-1, computerID, numEntries, curTime)
@@ -95,7 +104,12 @@ func recieveEnergyData(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	// Insert data into database
 	for _, element := range decoded {
 		err = db.InsertEnergyData(element.DateTime, element.RF, element.ComputerID)
-		handleError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			emptyResponse(w)
+			fmt.Print(err)
+			return
+		}
 	}
 
 	// Return OK or error

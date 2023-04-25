@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import EnergyChart from './components/EnergyChart.vue'
+import NetworkInfo from './components/NetworkInfo.vue'
 
 </script>
 
@@ -9,7 +10,7 @@ import EnergyChart from './components/EnergyChart.vue'
     <div class="mb-5 top"></div>
     <div class="grid grid-cols-5 gap-10 mr-10 ml-10">
       <div class="col-span-2 h-100 mb-2 card">
-
+        <NetworkInfo />
       </div>
       <div class="col-span-3 h-100 mb-2 card">
         <EnergyChart />

@@ -3,7 +3,7 @@ import { Chart } from 'chart.js/auto';
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios'
 
-const APIPATH = "http://api.localhost:3000"
+const APIPATH = "http://localhost:3000/api"
 const chartIntervals = 60
 const renderChart = ref(0)
 
@@ -39,7 +39,7 @@ function getChartData(data) {
     let da = new Date(a.dateTime)
     let db = new Date(b.dateTime)
 
-    return da.getTime() - db.getTime()
+    return db.getTime() - da.getTime()
   })
   for (let i = 0; i < data.length; i++) {
     data[i].dateTime = new Date(data[i].dateTime)
@@ -47,22 +47,24 @@ function getChartData(data) {
 
   let chartDataX = []
   let chartDataY = []
-  let dateTime = new Date(data[0].dateTime.getTime() + (chartIntervals * 1000))
+  let dateTime = new Date(data[0].dateTime.getTime())
   while (true && chartDataX.length < 15) {
     chartDataX.push(dateTime)
-    if (dateTime.getTime() > data[data.length - 1].dateTime.getTime() + (chartIntervals * 1000)) {
+    if (dateTime.getTime() < data[data.length - 1].dateTime.getTime() - (chartIntervals * 1000)) {
       break
     }
     chartDataY.push(getRFFromData(data, dateTime))
 
-    dateTime = new Date(dateTime.getTime() + (60 * 1000))
+    dateTime = new Date(dateTime.getTime() - (60 * 1000))
   }
+
+  chartDataX.reverse()
+  chartDataY.reverse()
 
   for (let i = 0; i < chartDataX.length; i++) {
     const elem = chartDataX[i];
-    let chartData = elem.getHours().toString() + ":" +
-      elem.getMinutes().toString() + ":" +
-      elem.getSeconds().toString()
+    let chartData = (elem.getHours()<10?'0':'') + elem.getHours().toString() + ":" +
+      (elem.getMinutes()<10?'0':'') + elem.getMinutes().toString()
     chartDataX[i] = chartData
   }
 
@@ -71,15 +73,14 @@ function getChartData(data) {
 
 function getRFFromData(data, dateTime) {
   let avalibleData = data.filter((d) => {
-    return d.dateTime < dateTime
+    return d.dateTime >= dateTime
   })
-  avalibleData.reverse()
 
   let RF = 0
   for (let i = 0; i < computers.length; i++) {
     for (let j = 0; j < avalibleData.length; j++) {
-      if (avalibleData[i].computerID == computers[j].id) {
-        RF += avalibleData[i].RF
+      if (avalibleData[j].computerID == computers[i].id) {
+        RF += avalibleData[j].RF
         break
       }
     }
@@ -142,7 +143,6 @@ function createChart() {
 }
 
 function updateChart() {
-
   async function getData() {
     // Get energy computers
     try {
@@ -174,10 +174,7 @@ function updateChart() {
   chart.update()
 }
 
-onMounted(() => {
-  setInterval(updateChart, 1000 * 60)
-})
-
+setInterval(updateChart, 1000 * 60)
 </script>
 
 <template>

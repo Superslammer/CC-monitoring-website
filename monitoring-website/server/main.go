@@ -8,76 +8,76 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-const APIROUTE string = "/"
+const APIROUTE string = "/api/"
 const MYSQL_TIME_FORMAT = "2006-01-02 15:04:05"
 
 // Handle host switching
-type HostSwitch map[string]http.Handler
-
-func (hs HostSwitch) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if handler := hs[r.Host]; handler != nil {
-		handler.ServeHTTP(w, r)
-	} else {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-	}
-}
+//type HostSwitch map[string]http.Handler
+//
+//func (hs HostSwitch) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+//	if handler := hs[r.Host]; handler != nil {
+//		handler.ServeHTTP(w, r)
+//	} else {
+//		http.Error(w, "Forbidden", http.StatusForbidden)
+//	}
+//}
 
 func main() {
 	// Setting up httprouter
-	api := httprouter.New()
-	api.RedirectTrailingSlash = true
-	api.HandleOPTIONS = true
+	website := httprouter.New()
+	website.RedirectTrailingSlash = true
+	website.HandleOPTIONS = true
 
 	// Make host switch
-	hs := make(HostSwitch)
-	hs["api.localhost:3000"] = api
+	//hs := make(HostSwitch)
+	//hs["localhost:3000"] = website
 
 	/// Handle api requests
 	/// Route: energy-data/
 	// Energy data extration
-	api.GET(APIROUTE+"energy-data/", extractParameters(withCORS(sendEnergyData)))
+	website.GET(APIROUTE+"energy-data/", extractParameters(withCORS(sendEnergyData)))
 
 	// Energy data insertion
-	api.POST(APIROUTE+"energy-data/", extractParameters(withCORS(recieveEnergyData)))
+	website.POST(APIROUTE+"energy-data/", extractParameters(withCORS(recieveEnergyData)))
 
 	/// Route: energy-data/:id
 	// Get single energy data entry
-	api.GET(APIROUTE+"energy-data/:id/", extractParameters(withCORS(sendEnergyData)))
+	website.GET(APIROUTE+"energy-data/:id/", extractParameters(withCORS(sendEnergyData)))
 
 	// Update energy data entry
-	api.PATCH(APIROUTE+"energy-data/:id/", extractParameters(withCORS(updateEnergyData)))
+	website.PATCH(APIROUTE+"energy-data/:id/", extractParameters(withCORS(updateEnergyData)))
 
 	// Remove energy data entry
-	api.DELETE(APIROUTE+"energy-data/:id/", extractParameters(withCORS(removeEnergyData)))
+	website.DELETE(APIROUTE+"energy-data/:id/", extractParameters(withCORS(removeEnergyData)))
 
 	/// Route: energy-computer/
 	// Get energy computers
-	api.GET(APIROUTE+"energy-computer/", extractParameters(withCORS(sendEnergyComputers)))
+	website.GET(APIROUTE+"energy-computer/", extractParameters(withCORS(sendEnergyComputers)))
 
 	// Assign/Create energy computers
-	api.POST(APIROUTE+"energy-computer/", extractParameters(withCORS(createEnergyComputer)))
+	website.POST(APIROUTE+"energy-computer/", extractParameters(withCORS(createEnergyComputer)))
 
 	/// Route: energy-computer/:id
 	// Get a single energy computer
-	api.GET(APIROUTE+"energy-computer/:id/", extractParameters(withCORS(sendEnergyComputers)))
+	website.GET(APIROUTE+"energy-computer/:id/", extractParameters(withCORS(sendEnergyComputers)))
 
 	// Update energy computer
-	api.PATCH(APIROUTE+"energy-computer/:id/", extractParameters(withCORS(updateEnergyComputer)))
+	website.PATCH(APIROUTE+"energy-computer/:id/", extractParameters(withCORS(updateEnergyComputer)))
 
 	// Remove/Unassign energy computer
-	api.DELETE(APIROUTE+"energy-computer/:id/", extractParameters(withCORS(removeEnergyComputer)))
+	website.DELETE(APIROUTE+"energy-computer/:id/", extractParameters(withCORS(removeEnergyComputer)))
 
 	// Set CORS
-	api.GlobalOPTIONS = http.HandlerFunc(handleCORS)
+	website.GlobalOPTIONS = http.HandlerFunc(handleCORS)
 
-	// Serve website
-	website := httprouter.New()
-	website.ServeFiles("/*filepath", http.Dir("./../frontend/dist"))
+	// Serve static
+	static := httprouter.New()
+	static.ServeFiles("/*filepath", http.Dir("./../frontend/dist"))
 
-	hs["localhost:3000"] = website
+	website.NotFound = static
 
 	fmt.Println("Server listening on port 3000")
-	log.Fatal(http.ListenAndServe(":3000", hs))
+	log.Fatal(http.ListenAndServe(":3000", website))
 }
 
 func handleCORS(w http.ResponseWriter, r *http.Request) {

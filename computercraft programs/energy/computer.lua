@@ -72,9 +72,9 @@ end
 
 function M.updateComputer(body)
     local headers = { ["Content-type"] = "application/json; charset=UTF-8" }
-    local method = "UPDATE"
+    local method = "PATCH"
     local request = {
-        url = apiURL .. "energy-computer/",
+        url = apiURL .. "energy-computer/" .. computerID,
         body = textutils.unserialiseJSON(body),
         headers = headers,
         method = method

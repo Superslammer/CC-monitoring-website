@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -47,13 +48,17 @@ func sendEnergyComputers(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	if err == sql.ErrNoRows {
 		w.WriteHeader(http.StatusNotFound)
 		emptyResponse(w)
+
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		emptyResponse(w)
 		fmt.Println(err)
+		log.Panic(err)
 		return
 	}
+
+	fmt.Println(data)
 
 	json.NewEncoder(w).Encode(&data)
 }

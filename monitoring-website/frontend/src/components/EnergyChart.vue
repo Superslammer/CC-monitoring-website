@@ -16,7 +16,9 @@ axios.get(APIPATH + "/energy-computer/").then(response => {
   computers = response.data
   renderChart.value++
 }).catch(error => {
-  console.log(error)
+  // No energy computers found in database
+  renderChart.value++
+  computers = null
 })
 
 // Get energy data
@@ -24,7 +26,9 @@ axios.get(APIPATH + "/energy-data/").then(response => {
   energyData = response.data
   renderChart.value++
 }).catch(error => {
-  console.log(error)
+  // No data found in database
+  renderChart.value++
+  energyData = null
 })
 
 let unwatch = watch(renderChart, (newVal) => {
@@ -90,6 +94,11 @@ function getRFFromData(data, dateTime) {
 }
 
 function createChart() {
+  if (energyData === null || computers === null){
+    renderChart.value = -1
+    return
+  }
+
   let [chartDataX, chartDataY] = getChartData(energyData)
   chart = new Chart(
     document.getElementById("energyData"),
@@ -140,6 +149,8 @@ function createChart() {
       }
     }
   )
+
+  setInterval(updateChart, 1000 * 60)
 }
 
 function updateChart() {
@@ -149,7 +160,7 @@ function updateChart() {
       let energyRes = await axios.get(APIPATH + "/energy-computer/")
       computers = energyRes.data
     } catch (error) {
-      console.log(error)
+      // No energy computers found in database
       return
     }
 
@@ -158,7 +169,7 @@ function updateChart() {
       let energyRes = await axios.get(APIPATH + "/energy-data/")
       energyData = energyRes.data
     } catch (error) {
-      console.log(error)
+      // No data found in database
       return
     }
   }
@@ -174,7 +185,6 @@ function updateChart() {
   chart.update()
 }
 
-setInterval(updateChart, 1000 * 60)
 </script>
 
 <template>
@@ -182,6 +192,9 @@ setInterval(updateChart, 1000 * 60)
     <canvas id="energyData" v-if="renderChart == 2">
 
     </canvas>
+    <div class="flex justify-center items-center h-full" v-else-if="renderChart == -1">
+      <p class="noData">No data found in database!</p>
+    </div>
     <div class="spinner" title="Loading data" v-else>
       <img src="../assets/spinner.svg" class="spinner" alt="Loading data" />
     </div>
@@ -208,5 +221,9 @@ setInterval(updateChart, 1000 * 60)
     left: 50%;
     transform: translateX(-50%) translateY(-50%);
   }
+}
+
+.noData {
+  font-size: 2.6rem;
 }
 </style>

@@ -146,6 +146,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/energyComputerGet"
+        "400":
+          description: Malformed request
+        "404":
+          description: No entries in database
 
     post:
       operationId: postEnergyComputer

@@ -16,8 +16,21 @@ const indicators = ref([
 ])
 const percentFull = ref(0)
 
+function noComputers() {
+  indicators.value[0] = "hideIndicator"
+  indicators.value[1] = "hideIndicator"
+  indicators.value[2] = "hideIndicator"
+  indicators.value[3] = "hideIndicator"
+  indicators.value[4] = "hideIndicator"
+  indicators.value[5] = "hideIndicator"
+}
+
 function getRFInfo() {
   axios.get(APIPATH + "/energy-computer/").then(response => {
+    if (response.data == null) {
+      noComputers()
+      return
+    }
     for (let i = 0; i < response.data.length; i++) {
       const computer = response.data[i];
       currentRF.value += computer.currentRF

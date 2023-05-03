@@ -103,32 +103,9 @@ func withCORS(fn httprouter.Handle) httprouter.Handle {
 	}
 }
 
-/*func withAPIKey(fn httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		key := r.URL.Query().Get("key")
-		if !isValidAPIKey(key) {
-			respondErr(w, http.StatusUnauthorized, "Invalid API key")
-			return
-		}
-		ps = append(ps, httprouter.Param{Key: "key", Value: key})
-		fn(w, r, ps)
-	}
-}
-
-func isValidAPIKey(key string) bool {
-	return key == "abc123"
-}*/
-
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
-
-/*func respondErr(w http.ResponseWriter, status int, message string) {
-	var response ErrorResponse
-	response.Error = message
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(response)
-}*/
 
 func handleError(err error) {
 	if err != nil {
@@ -137,6 +114,6 @@ func handleError(err error) {
 }
 
 func emptyResponse(w http.ResponseWriter) {
-	_, err := fmt.Fprint(w, "{}")
+	_, err := fmt.Fprint(w, "null")
 	handleError(err)
 }

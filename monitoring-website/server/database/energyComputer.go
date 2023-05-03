@@ -25,9 +25,14 @@ func (db *Database) GetEnergyComputers(id int, numComputers int) ([]EnergyComput
 			nilResponse := []EnergyComputer{}
 			return nilResponse, err
 		}
+		defer energyComputersDBRes.Close()
 
 		var energyComputers []EnergyComputer
-		for energyComputersDBRes.Next() {
+		if !energyComputersDBRes.Next() {
+			nilResponse := []EnergyComputer{}
+			return nilResponse, sql.ErrNoRows
+		}
+		for {
 			var energyComputer EnergyComputer
 			// Getting id and max RF
 			err := energyComputersDBRes.Scan(&energyComputer.ID, &energyComputer.MaxRF)
@@ -53,6 +58,10 @@ func (db *Database) GetEnergyComputers(id int, numComputers int) ([]EnergyComput
 			}
 
 			energyComputers = append(energyComputers, energyComputer)
+
+			if !energyComputersDBRes.Next() {
+				break
+			}
 		}
 
 		return energyComputers, nil
